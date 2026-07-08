@@ -2,7 +2,7 @@ mod cam;
 mod error;
 mod routes;
 
-use cam::CamConfig;
+use cam::{CamClient, CamConfig};
 use routes::AppState;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -12,10 +12,13 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// 該当機能だけが未提供になる。`/health` は常に動く = secret 配線前でも
 /// deploy が落ちない。
 fn state_from_env() -> AppState {
-    let cam = CamConfig::from_env();
-    if cam.is_none() {
-        tracing::warn!("CAM_* not fully set — camera scrape is unavailable");
-    }
+    let cam = match CamConfig::from_env() {
+        Some(config) => Some(CamClient::new(config)),
+        None => {
+            tracing::warn!("CAM_* not fully set — camera scrape is unavailable");
+            None
+        }
+    };
 
     AppState { cam }
 }
