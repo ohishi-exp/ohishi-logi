@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  # fmt / clippy / test / build (ippoan/ci-workflows の rust-ci.yml reusable)
+  ci:
+    uses: ippoan/ci-workflows/.github/workflows/rust-ci.yml@main
+    with:
+      binary_name: ohishi-logi
+      shared_key: ohishi-logi
+
+  # 全 CI job が success した時だけ auto-merge を enable する。
+  # Cloud Run deploy job はまだ無い (GCP project / Supabase schema 未確定、
+  # Refs #1) — 追加時は deploy job を needs に必ず含めること
+  # (merge → branch 削除で走行中 deploy が無音 cancel される race を防ぐため)。
+  auto-merge:
+    name: Auto Merge
+    needs: [ci]
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      needs.ci.result == 'success'
+    uses: ippoan/ci-workflows/.github/workflows/auto-merge.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    # cross-org (ohishi-exp) caller は secrets: inherit 不可 — named secret で明示渡し
+    # (ippoan/ci-workflows CLAUDE.md 不変則、browser-render-rust / daiun-salary と同パターン)
+    secrets:
+      CI_APP_ID: ${{ secrets.CI_APP_ID }}
+      CI_APP_PRIVATE_KEY: ${{ secrets.CI_APP_PRIVATE_KEY }}
