@@ -2,23 +2,18 @@
 name = "ohishi-logi"
 version = "0.1.0"
 edition = "2021"
-description = "cam scrape 実処理 (Digest認証 SDカード巡回 + Flickr upload) — Cloud Run バックエンド"
+description = "cam scrape 実処理 (Digest認証 SDカード巡回、Cloud Run バックエンド)"
 publish = false
 
 [dependencies]
 axum = "0.8"
-base64 = "0.22"
-# OAuth 1.0a HMAC-SHA1 は pure Rust の hmac + sha1 (ring 非依存 = musl static が単純)
-hmac = "0.12"
 # カメラ SD CGI の Digest 認証 (RFC 2617 / MD5)。RustCrypto 系 pure Rust
 md-5 = "0.10"
-# カメラのディレクトリ一覧 XML / Flickr upload 応答 XML のパース
+# カメラのディレクトリ一覧 XML のパース
 quick-xml = "0.37"
 # rustls 統一 (openssl 禁止)。webpki-roots 同梱 = scratch に CA store 不要
-reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls-webpki-roots"] }
-serde = { version = "1", features = ["derive"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-webpki-roots"] }
 serde_json = "1"
-sha1 = "0.10"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }

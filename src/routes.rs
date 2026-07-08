@@ -1,14 +1,16 @@
 //! axum ルーティング。現時点では死活監視のみ (Refs ohishi-exp/ohishi-logi#1)。
 //!
-//! `cf-flickr-cam-worker` から呼ばれる RPC endpoint (`/sync` 等) は DB スキーマ
-//! 設計 (Issue #1 の未確定事項) が決まってから追加する。
+//! `cf-flickr-cam-worker` から呼ばれる RPC endpoint (カメラ日付/時間/ファイル
+//! 一覧・ファイル本体 download) は DB スキーマ設計 (Issue #1 の未確定事項) が
+//! 決まってから追加する。OAuth1.0a 認可フロー・Flickr multipart upload・token
+//! 永続化 (KV) は `cf-flickr-cam-worker` 側の責務に移した (MD5 と違い HMAC-SHA1
+//! は Workers runtime で問題なく動くため)。
 
 use axum::routing::get;
 use axum::{Json, Router};
 use serde_json::{json, Value};
 
 use crate::cam::CamConfig;
-use crate::flickr::FlickrClient;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -16,8 +18,6 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct AppState {
     #[allow(dead_code)] // RPC endpoint (follow-up) で使用予定
     pub cam: Option<CamConfig>,
-    #[allow(dead_code)] // RPC endpoint (follow-up) で使用予定
-    pub flickr: Option<FlickrClient>,
 }
 
 async fn health() -> Json<Value> {
@@ -48,10 +48,7 @@ mod tests {
     use super::*;
 
     fn empty_state() -> AppState {
-        AppState {
-            cam: None,
-            flickr: None,
-        }
+        AppState { cam: None }
     }
 
     #[tokio::test]
