@@ -1,16 +1,13 @@
 mod cam;
 mod error;
-mod flickr;
-mod oauth1;
 mod routes;
 
 use cam::CamConfig;
-use flickr::{FlickrClient, FlickrConfig};
 use routes::AppState;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// env から AppState を構築する。CAM_* / FLICKR_* は **boot 時 optional**
+/// env から AppState を構築する。CAM_* は **boot 時 optional**
 /// (rust-flickr / secrets-inventory-gcp と同方式): 未設定でも起動は成功し、
 /// 該当機能だけが未提供になる。`/health` は常に動く = secret 配線前でも
 /// deploy が落ちない。
@@ -20,17 +17,7 @@ fn state_from_env() -> AppState {
         tracing::warn!("CAM_* not fully set — camera scrape is unavailable");
     }
 
-    let flickr = match FlickrConfig::from_env() {
-        Some(config) => Some(FlickrClient::new(config)),
-        None => {
-            tracing::warn!(
-                "FLICKR_CONSUMER_KEY/FLICKR_CONSUMER_SECRET/FLICKR_CALLBACK_URL not set — flickr upload is unavailable"
-            );
-            None
-        }
-    };
-
-    AppState { cam, flickr }
+    AppState { cam }
 }
 
 #[tokio::main]
@@ -49,9 +36,6 @@ async fn main() {
         println!("  CAM_JPG_CGI             camera jpg download CGI base URL");
         println!("  CAM_CF_ACCESS_CLIENT_ID     CF Access service token id (optional)");
         println!("  CAM_CF_ACCESS_CLIENT_SECRET CF Access service token secret (optional)");
-        println!("  FLICKR_CONSUMER_KEY     Flickr OAuth consumer key");
-        println!("  FLICKR_CONSUMER_SECRET  Flickr OAuth consumer secret");
-        println!("  FLICKR_CALLBACK_URL     OAuth callback URL");
         return;
     }
 
