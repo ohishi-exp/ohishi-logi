@@ -10,10 +10,12 @@ proxy から RPC で呼ばれる想定。設計の背景・現状・未着手事
 
 ## repo 固有の invariant
 
-- **Flickr OAuth1.0a / multipart upload / access token 永続化は本 repo に置かない**
-  — `cf-flickr-cam-worker` (Cloudflare Worker) 側の責務 (MD5 と違い HMAC-SHA1 は
-  Workers runtime で動くため、2026-07-08 方針決定)。本 repo はカメラ側 (Digest
-  認証・SD 巡回・ファイル本体 download) のみ持つ。
+- **Flickr OAuth1.0a / multipart upload / access token 永続化・カメラ写真メタ
+  データの永続化 (D1/R2) は本 repo に置かない** — 全て `cf-flickr-cam-worker`
+  (Cloudflare Worker) 側の責務。本 repo は**無状態**の camera fetcher (Digest
+  認証・SD 巡回・ファイル本体 download の RPC) のみ持つ (2026-07-08 方針決定)。
+- **認証コードを自前で持たない** — Cloud Run IAM lockdown (`run.invoker` を
+  auth-worker の impersonate SA に限定) に委ねる想定 (follow-up)。
 
 ## ビルド / テスト
 
